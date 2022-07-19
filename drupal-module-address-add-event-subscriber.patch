@@ -1,0 +1,2704 @@
+diff --git a/address.services.yml b/address.services.yml
+index 4332a2e..d450e52 100644
+--- a/address.services.yml
++++ b/address.services.yml
+@@ -14,3 +14,113 @@ services:
+   address.postal_label_formatter:
+     class: CommerceGuys\Addressing\Formatter\PostalLabelFormatter
+     arguments: ['@address.address_format_repository', '@address.country_repository', '@address.subdivision_repository']
++
++  address.hk_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hknorth_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKNorthEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkcheungchau_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKCheungChauEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hktaipo_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKTaiPoEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hklantau_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKLantauEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkeastern_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKEasternEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkkwuntong_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKKwunTongEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkwongtaisin_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKWongTaiSinEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkkowlooncity_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKKowloonCityEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkkwaitsing_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKKwaiTsingEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hksouthern_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKSouthernEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hklammaisland_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKLammaIslandEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkpengchau_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKPengChauEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hktsuenwan_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKTsuenWanEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkshatin_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKShaTinEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkshamshuipo_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKShamShuiPoEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hktuenmun_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKTuenMunEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkwanchai_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKWanChaiEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hksaikung_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKSaiKungEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkyautsimmong_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKYauTsimMongEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkyuenlong_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKYuenLongEventSubscriber
++    tags:
++      - { name: event_subscriber }
++
++  address.hkcentralandwestern_event_subscriber:
++    class: Drupal\address\EventSubscriber\HKCentralandWesternEventSubscriber
++    tags:
++      - { name: event_subscriber }
+diff --git a/src/EventSubscriber/HKCentralandWesternEventSubscriber.php b/src/EventSubscriber/HKCentralandWesternEventSubscriber.php
+new file mode 100644
+index 0000000..9a5606e
+--- /dev/null
++++ b/src/EventSubscriber/HKCentralandWesternEventSubscriber.php
+@@ -0,0 +1,105 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKCentralandWesternEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Central and Western District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Mid-levels' => [
++	  "local_code" => "半山", 
++	],
++	'Arthur Edward Kennedy' => [
++	  "local_code" => "堅尼地城",
++	],
++	'Admiralty' => [
++	  "local_code" => "金鐘",
++	],
++	'The Peak' => [
++	  "local_code" => "山頂",
++	],
++	'Lugard Road' => [
++	  "local_code" => "山頂盧吉道",
++	],
++	'Sheung Wan' => [
++	  "local_code" => "上環",
++	],
++	'Sai Wan' => [
++	  "local_code" => "西環",
++	],
++	'Sai Ying Pun' => [
++	  "local_code" => "西營盤",
++	],
++	'Central' => [
++	  "local_code" => "中環",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKCheungChauEventSubscriber.php b/src/EventSubscriber/HKCheungChauEventSubscriber.php
+new file mode 100644
+index 0000000..b04e638
+--- /dev/null
++++ b/src/EventSubscriber/HKCheungChauEventSubscriber.php
+@@ -0,0 +1,81 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKCheungChauEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Cheung Chau District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Cheung Chau' => [
++	  "local_code" => "長洲", 
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKEasternEventSubscriber.php b/src/EventSubscriber/HKEasternEventSubscriber.php
+new file mode 100644
+index 0000000..570a31a
+--- /dev/null
++++ b/src/EventSubscriber/HKEasternEventSubscriber.php
+@@ -0,0 +1,111 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKEasternEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Eastern District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'North Point' => [
++	  "local_code" => "北角", 
++	],
++	'Chai Wan' => [
++          "local_code" => "柴灣",
++	],
++	'Fortress Hill' => [
++	  "local_code" => "炮台山",
++	],
++	'Shau Kei Wan' => [
++	  "local_code" => "筲箕灣",
++	],
++	'Tai Koo' => [
++	  "local_code" => "太古",
++	],
++	'Taikoo Shing' => [
++	  "local_code" => "太古城",
++	],
++        'Tin Hau' => [
++	  "local_code" => "天后",
++	],
++	'Sai Wan Ho' => [
++	  "local_code" => "西灣河",
++	],
++	'Siu Sai Wan' => [
++	  "local_code" => "小西灣",
++	],
++	'Heng Fa Chuen' => [
++	  "local_code" => "杏花村",
++	],
++	'Quarry Bay' => [
++	  "local_code" => "鰂魚涌",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKEventSubscriber.php b/src/EventSubscriber/HKEventSubscriber.php
+new file mode 100644
+index 0000000..a493092
+--- /dev/null
++++ b/src/EventSubscriber/HKEventSubscriber.php
+@@ -0,0 +1,162 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'North District' => [
++	  "local_code" => "北區",
++	  "has_children" => true, 
++	],
++	'Cheung Chau District' => [ 
++	  "local_code" => '長洲區', 
++	  "has_children" => true, 
++	],
++	'Tai Po District' => [ 
++          "local_code" => '大埔區',
++	  "has_children" => true, 
++	],
++	'Lantau District' => [
++	  "local_code" => '大嶼山區',
++	  "has_children" => true, 
++	],
++	'Eastern District' => [ 
++	  "local_code" => '東區', 
++	  "has_children" => true, 
++	],
++	'Kwun Tong District' => [ 
++	  "local_code" => '觀塘區', 
++	  "has_children" => true, 
++	],
++	'Wong Tai Sin District' => [ 
++	  "local_code" => '黃大仙區',
++	  "has_children" => true, 
++	],
++	'Kowloon City District' => [ 
++	  "local_code" => '九龍城區',
++	  "has_children" => true, 
++	],
++	'Kwai Tsing District' => [ 
++	  "local_code" => '葵青區',
++	  "has_children" => true, 
++	],
++	'Southern District' => [ 
++	  "local_code" => '南區',
++	  "has_children" => true, 
++	],
++	'Lamma Island District' => [ 
++	  "local_code" => '南丫島區',
++	  "has_children" => true, 
++	],
++	'Peng Chau District' => [ 
++	  "local_code" => '坪洲區',
++	  "has_children" => true, 
++	],
++	'Tsuen Wan District' => [ 
++	  "local_code" => '荃灣區',
++	  "has_children" => true, 
++	],
++	'Sha Tin District' => [ 
++	  "local_code" => '沙田區',
++	  "has_children" => true, 
++	],
++	'Sham Shui Po District' => [ 
++	  "local_code" => '深水埗區',
++	  "has_children" => true, 
++	],
++	'Tuen Mun District' => [ 
++	  "local_code" => '屯門區',
++	  "has_children" => true, 
++	],
++	'WanChai District' => [ 
++	  "local_code" => '灣仔區',
++	  "has_children" => true, 
++	],
++	'Sai Kung District' => [ 
++	  "local_code" => '西貢區',
++	  "has_children" => true, 
++	],
++	'Yau Tsim Mong District' => [ 
++	  "local_code" => '油尖旺區',
++	  "has_children" => true, 
++	],
++	'Yuen Long District' => [ 
++	  "local_code" => '元朗區',
++	  "has_children" => true, 
++	],
++	'Central and Western District' => [ 
++	  "local_code" => '中西區',
++	  "has_children" => true, 
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKKowloonCityEventSubscriber.php b/src/EventSubscriber/HKKowloonCityEventSubscriber.php
+new file mode 100644
+index 0000000..d4704e9
+--- /dev/null
++++ b/src/EventSubscriber/HKKowloonCityEventSubscriber.php
+@@ -0,0 +1,102 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKKowloonCityEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Kowloon City District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Ho Man Tin' => [
++	  "local_code" => "何文田", 
++	],
++	'Hung Hom' => [
++	  "local_code" => "紅磡",
++	],
++	'Whampoa' => [
++	  "local_code" => "黃埔",
++	],
++	'Kowloon City' => [
++	  "local_code" => "九龍城",
++	],
++	'Kowloon Tong' => [
++	  "local_code" => "九龍塘",
++	],
++	'Ma Tau Wai' => [
++	  "local_code" => "馬頭圍",
++	],
++	'Kai Tak' => [
++	  "local_code" => "啟德",
++	],
++	'To Kwa Wan' => [
++	  "local_code" => "土瓜灣",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKKwaiTsingEventSubscriber.php b/src/EventSubscriber/HKKwaiTsingEventSubscriber.php
+new file mode 100644
+index 0000000..85ff996
+--- /dev/null
++++ b/src/EventSubscriber/HKKwaiTsingEventSubscriber.php
+@@ -0,0 +1,99 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKKwaiTsingEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Kwai Tsing District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Kwai Fong' => [
++	  "local_code" => "葵芳", 
++	],
++	'Kwai Hing' => [
++	  "local_code" => "葵興",
++	],
++	'Kwai Chung' => [
++	  "local_code" => "葵涌",
++	],
++	'Kwai Tsing Container Terminal' => [
++	  "local_code" => "葵涌貨櫃碼頭",
++	],
++	'Lai King' => [
++	  "local_code" => "荔景",
++	],
++	'Tsing Yi' => [
++	  "local_code" => "青衣",
++	],
++	'Tsing Yi Goodman Interlink' => [
++	  "local_code" => "青衣嘉民領達中心",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKKwunTongEventSubscriber.php b/src/EventSubscriber/HKKwunTongEventSubscriber.php
+new file mode 100644
+index 0000000..8fde876
+--- /dev/null
++++ b/src/EventSubscriber/HKKwunTongEventSubscriber.php
+@@ -0,0 +1,99 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKKwunTongEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Kwun Tong District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Kwun Tong' => [
++	  "local_code" => "觀塘", 
++	],
++	'Kowloon Bay' => [
++	  "local_code" => "九龍灣",
++	],
++	'Lam Tin' => [
++	  "local_code" => "藍田",
++	],
++	'Ngau Tau Kok' => [
++	  "local_code" => "牛頭角",
++	],
++	'Shun Lee' => [
++	  "local_code" => "順利",
++	],
++	'Sau Mau Ping' => [
++	  "local_code" => "秀茂坪",
++	],
++	'Yau Tong' => [
++	  "local_code" => "油塘",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKLammaIslandEventSubscriber.php b/src/EventSubscriber/HKLammaIslandEventSubscriber.php
+new file mode 100644
+index 0000000..0dd6e0c
+--- /dev/null
++++ b/src/EventSubscriber/HKLammaIslandEventSubscriber.php
+@@ -0,0 +1,81 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKLammaIslandEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Lamma Island District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Lamma Island' => [
++	  "local_code" => "南丫島", 
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKLantauEventSubscriber.php b/src/EventSubscriber/HKLantauEventSubscriber.php
+new file mode 100644
+index 0000000..dee600a
+--- /dev/null
++++ b/src/EventSubscriber/HKLantauEventSubscriber.php
+@@ -0,0 +1,132 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKLantauEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Lantau District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Ngong Ping' => [
++          "local_code" => "昂坪",
++	],
++        'Pui O' => [
++          "local_code" => "貝澳",
++        ],
++        'Cheung Sha' => [
++          "local_code" => "長沙",
++        ],
++        'Chek Lap Kok' => [
++          "local_code" => "赤鱲角",
++        ],
++        'Tai O' => [
++          "local_code" => "大澳",
++	],
++        'Tai O Pier' => [
++          "local_code" => "大澳碼頭",
++	],
++        'Lantau Island' => [
++          "local_code" => "大嶼山",
++	],
++        'Tung Chung' => [
++          "local_code" => "東涌",
++	],
++        'Ma Wan' => [
++          "local_code" => "馬灣",
++	],
++        'Mui Wo' => [
++          "local_code" => "梅窩",
++	],
++        'Mui Wo Pier' => [
++          "local_code" => "梅窩碼頭",
++	],
++        'Shibi' => [
++          "local_code" => "石壁",
++	],
++        'Tong Fuk' => [
++          "local_code" => "塘福",
++	],
++        'The Big Buddha' => [
++          "local_code" => "天壇大佛",
++	],
++        'Hong Kong Disneyland' => [
++          "local_code" => "香港迪士尼",
++	],
++        'Hong Kong International Airport' => [
++          "local_code" => "香港國際機場",
++	],
++	'Discovery Bay' => [
++	  "local_code" => "愉景灣",
++	],
++	'Penny\'s Bay' => [
++	  "local_code" => "竹篙灣",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKNorthEventSubscriber.php b/src/EventSubscriber/HKNorthEventSubscriber.php
+new file mode 100644
+index 0000000..a16dd51
+--- /dev/null
++++ b/src/EventSubscriber/HKNorthEventSubscriber.php
+@@ -0,0 +1,102 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKNorthEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'North District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'North District' => [
++	  "local_code" => "北區", 
++	],
++	'Ta Kwu Ling' => [
++	  "local_code" => "打鼓嶺",
++	],
++	'Fanling' => [
++          "local_code" => "粉嶺",
++	],
++        'Kwu Tung' => [
++          "local_code" => "古洞",
++	],
++        'Ping Che' => [
++          "local_code" => "坪輋",
++        ],
++        'Sha Tau Kok' => [
++          "local_code" => "沙頭角",
++	],
++        'Sheung Shui' => [
++          "local_code" => "上水",
++	],
++        'Man Kam To' => [
++          "local_code" => "文錦渡",
++        ],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKPengChauEventSubscriber.php b/src/EventSubscriber/HKPengChauEventSubscriber.php
+new file mode 100644
+index 0000000..2a65324
+--- /dev/null
++++ b/src/EventSubscriber/HKPengChauEventSubscriber.php
+@@ -0,0 +1,81 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKPengChauEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Peng Chau District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Peng Chau' => [
++	  "local_code" => "坪洲", 
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKSaiKungEventSubscriber.php b/src/EventSubscriber/HKSaiKungEventSubscriber.php
+new file mode 100644
+index 0000000..39382e6
+--- /dev/null
++++ b/src/EventSubscriber/HKSaiKungEventSubscriber.php
+@@ -0,0 +1,99 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKSaiKungEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Sai Kung District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Po Lam' => [
++	  "local_code" => "寶琳", 
++	],
++	'Tiu Keng Leng' => [
++	  "local_code" => "調景嶺",
++	],
++	'Tseung Kwan O' => [
++	  "local_code" => "將軍澳",
++	],
++	'LOHAS Park' => [
++	  "local_code" => "康城",
++	],
++	'Hang Hau' => [
++	  "local_code" => "坑口",
++	],
++	'Clearwater Bay' => [
++	  "local_code" => "清水灣",
++	],
++	'Sai Kung' => [
++	  "local_code" => "西貢",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKShaTinEventSubscriber.php b/src/EventSubscriber/HKShaTinEventSubscriber.php
+new file mode 100644
+index 0000000..41c8aef
+--- /dev/null
++++ b/src/EventSubscriber/HKShaTinEventSubscriber.php
+@@ -0,0 +1,105 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKShaTinEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Sha Tin District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Tai Wai' => [
++	  "local_code" => "大圍", 
++	],
++	'Wo Che' => [
++	  "local_code" => "禾輋",
++	],
++	'Fo Tan' => [
++	  "local_code" => "火炭",
++	],
++	'Kau To Shan/Cove Hill' => [
++	  "local_code" => "九肚山",
++	],
++	'Ma On Shan' => [
++	  "local_code" => "馬鞍山",
++	],
++	'Ma Liu Shui' => [
++	  "local_code" => "馬料水",
++	],
++	'Sha Tin' => [
++	  "local_code" => "沙田",
++	],
++	'Shek Mun' => [
++	  "local_code" => "石門",
++	],
++	'Siu Lek Yuen' => [
++	  "local_code" => "小瀝源",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKShamShuiPoEventSubscriber.php b/src/EventSubscriber/HKShamShuiPoEventSubscriber.php
+new file mode 100644
+index 0000000..144f799
+--- /dev/null
++++ b/src/EventSubscriber/HKShamShuiPoEventSubscriber.php
+@@ -0,0 +1,99 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKShamShuiPoEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Sham Shui Po District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Ngong Shuen Chau' => [
++	  "local_code" => "昂船洲", 
++	],
++	'Cheung Sha Wan' => [
++	  "local_code" => "長沙灣",
++	],
++	'Lai Chi Kok' => [
++	  "local_code" => "荔枝角",
++	],
++	'Mei Foo' => [
++	  "local_code" => "美孚",
++	],
++	'Nam Cheong' => [
++	  "local_code" => "南昌",
++	],
++	'Shma Shui Po' => [
++	  "local_code" => "深水埗",
++	],
++	'Shek Kip Mei' => [
++	  "local_code" => "石硤尾",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKSouthernEventSubscriber.php b/src/EventSubscriber/HKSouthernEventSubscriber.php
+new file mode 100644
+index 0000000..0839cc0
+--- /dev/null
++++ b/src/EventSubscriber/HKSouthernEventSubscriber.php
+@@ -0,0 +1,111 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKSouthernEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Southern District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Pok Fu Lam' => [
++	  "local_code" => "薄扶林", 
++	],
++	'Stanley' => [
++	  "local_code" => "赤柱",
++	],
++	'Chung Hom Kok' => [
++	  "local_code" => "舂坎角",
++	],
++	'Tai Tam' => [
++	  "local_code" => "大潭",
++	],
++	'Wah Fu' => [
++	  "local_code" => "華富",
++	],
++	'Wong Chuk Hang' => [
++	  "local_code" => "黃竹坑",
++	],
++	'Repulse Bay' => [
++	  "local_code" => "淺水灣",
++	],
++	'Deep Water Bay' => [
++	  "local_code" => "深水灣",
++	],
++        'Shek O' => [
++          "local_code" => "石澳",
++        ],
++        'Aberdeen' => [
++          "local_code" => "香港仔",
++        ],
++        'Ap Lei Chau' => [
++          "local_code" => "鴨脷洲",
++        ],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKTaiPoEventSubscriber.php b/src/EventSubscriber/HKTaiPoEventSubscriber.php
+new file mode 100644
+index 0000000..0dc3984
+--- /dev/null
++++ b/src/EventSubscriber/HKTaiPoEventSubscriber.php
+@@ -0,0 +1,84 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKTaiPoEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Tai Po District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Tai Po' => [
++	  "local_code" => "大埔", 
++	],
++	'Tai Wo' => [
++          "local_code" => "太和",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKTsuenWanEventSubscriber.php b/src/EventSubscriber/HKTsuenWanEventSubscriber.php
+new file mode 100644
+index 0000000..d1509f8
+--- /dev/null
++++ b/src/EventSubscriber/HKTsuenWanEventSubscriber.php
+@@ -0,0 +1,90 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKTsuenWanEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Tsuen Wan District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Tai Wo Hau' => [
++	  "local_code" => "大窩口", 
++	],
++	'Tsuen Wan' => [
++	  "local_code" => "荃灣",
++	],
++	'Sham Tseng' => [
++	  "local_code" => "深井",
++	],
++	'Ting Kau' => [
++	  "local_code" => "汀九",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKTuenMunEventSubscriber.php b/src/EventSubscriber/HKTuenMunEventSubscriber.php
+new file mode 100644
+index 0000000..d2cab16
+--- /dev/null
++++ b/src/EventSubscriber/HKTuenMunEventSubscriber.php
+@@ -0,0 +1,105 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKTuenMunEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Tuen Mun District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Tai Lam' => [
++	  "local_code" => "大欖", 
++	],
++	'Tai Lam Chung' => [
++	  "local_code" => "大欖涌",
++	],
++	'Lam Tei' => [
++	  "local_code" => "藍地",
++	],
++	'Lung Kwu Tan' => [
++	  "local_code" => "龍鼓灘",
++	],
++	'So Kwun Wat' => [
++	  "local_code" => "掃管笏",
++	],
++	'Tuen Mun' => [
++	  "local_code" => "屯門",
++	],
++	'Tuen Mun River Trade Terminal' => [
++	  "local_code" => "屯門內河碼頭",
++	],
++	'Siu Lam' => [
++	  "local_code" => "小欖",
++	],
++	'San Hui' => [
++	  "local_code" => "新墟",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKWanChaiEventSubscriber.php b/src/EventSubscriber/HKWanChaiEventSubscriber.php
+new file mode 100644
+index 0000000..d542148
+--- /dev/null
++++ b/src/EventSubscriber/HKWanChaiEventSubscriber.php
+@@ -0,0 +1,93 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKWanChaiEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'WanChai District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Tai Hang' => [
++	  "local_code" => "大坑", 
++	],
++	'Happy Valley' => [
++	  "local_code" => "跑馬地",
++	],
++	'Causeway Bay' => [
++	  "local_code" => "銅鑼灣",
++	],
++	'WanChai' => [
++	  "local_code" => "灣仔",
++	],
++	'Hong Kong Convention and Exhibition Centre' => [
++	  "local_code" => "香港會議展覽中心",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKWongTaiSinEventSubscriber.php b/src/EventSubscriber/HKWongTaiSinEventSubscriber.php
+new file mode 100644
+index 0000000..0753dd6
+--- /dev/null
++++ b/src/EventSubscriber/HKWongTaiSinEventSubscriber.php
+@@ -0,0 +1,102 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKWongTaiSinEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Wong Tai Sin District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Choi Hung' => [
++	  "local_code" => "彩虹", 
++	],
++	'Tsz Wan Shan' => [
++	  "local_code" => "慈雲山",
++	],
++	'Wang Tau Hom' => [
++	  "local_code" => "橫頭磡",
++	],
++	'Wong Tai Sin' => [
++	  "local_code" => "黃大仙",
++	],
++	'Lok Fu' => [
++	  "local_code" => "樂富",
++	],
++	'Ngau Chi Wan' => [
++	  "local_code" => "牛池灣",
++	],
++	'San Po Kong' => [
++	  "local_code" => "新蒲崗",
++	],
++	'Diamond Hill' => [
++	  "local_code" => "鑽石山",
++	 ],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKYauTsimMongEventSubscriber.php b/src/EventSubscriber/HKYauTsimMongEventSubscriber.php
+new file mode 100644
+index 0000000..6de9ebf
+--- /dev/null
++++ b/src/EventSubscriber/HKYauTsimMongEventSubscriber.php
+@@ -0,0 +1,99 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKYauTsimMongEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Yau Tsim Mong District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Tai Kok Tsui' => [
++	  "local_code" => "大角咀", 
++	],
++	'Tsim Sha Tsui' => [
++	  "local_code" => "尖沙咀",
++	],
++	'Austin' => [
++	  "local_code" => "柯士甸",
++	],
++	'Prince Edward' => [
++	  "local_code" => "太子",
++	],
++	'Mong Kok' => [
++	  "local_code" => "旺角",
++	],
++	'Yau Ma Tei' => [
++	  "local_code" => "油麻地",
++	],
++	'Jordan' => [
++	  "local_code" => "佐敦",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/HKYuenLongEventSubscriber.php b/src/EventSubscriber/HKYuenLongEventSubscriber.php
+new file mode 100644
+index 0000000..bb305dc
+--- /dev/null
++++ b/src/EventSubscriber/HKYuenLongEventSubscriber.php
+@@ -0,0 +1,126 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use CommerceGuys\Addressing\AddressFormat\LocalityType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class HKYuenLongEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'HK') {
++		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++		$definition['locality_type'] = LocalityType::CITY;
++		$definition['administrative_area_type'] = AdministrativeAreaType::DISTRICT;
++      		$definition['subdivision_depth'] = 2;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++   public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['HK', 'Yuen Long District']) {
++      return;
++    }
++    
++    $definitions = [
++      'country_code' => $parents[0],
++      'locale' => "zh-Hant",
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be use
++	// in the address widget dropdown.
++	'Pat Heung' => [
++          "local_code" => "八鄉",
++	],
++        'Tai Tong' => [
++          "local_code" => "大棠",
++        ],
++        'Hung Shui Kiu' => [
++          "local_code" => "洪水橋",
++        ],
++        'Kam Sheung Road' => [
++          "local_code" => "錦上路",
++        ],
++        'Kam Tin' => [
++          "local_code" => "錦田",
++	],
++        'Lam Tsuen' => [
++          "local_code" => "林村",
++	],
++        'Lau Fau Shan' => [
++          "local_code" => "流浮山",
++	],
++        'Lok Ma Chau' => [
++          "local_code" => "落馬洲",
++	],
++        'Mai Po' => [
++          "local_code" => "米埔",
++	],
++        'Ngau Tam Mei' => [
++          "local_code" => "牛潭尾",
++	],
++        'Ping Shan' => [
++          "local_code" => "屏山",
++	],
++        'Shek Kong' => [
++          "local_code" => "石崗",
++	],
++        'Tin Shui Wai' => [
++          "local_code" => "天水圍",
++	],
++        'Ha Tsuen' => [
++          "local_code" => "廈村",
++	],
++        'San Tin' => [
++          "local_code" => "新田",
++	],
++        'Yuen Long' => [
++          "local_code" => "元朗",
++	],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++   }
++}
+diff --git a/src/EventSubscriber/PHEventSubscriber.php b/src/EventSubscriber/PHEventSubscriber.php
+new file mode 100644
+index 0000000..15152bd
+--- /dev/null
++++ b/src/EventSubscriber/PHEventSubscriber.php
+@@ -0,0 +1,73 @@
++<?php
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  public function onAddressFormat(AddressFormatEvent $event) {
++    $definition = $event->getDefinition();
++    $definition['subdivision_depth'] = 3;
++    $event->setDefinition($definition);
++  }
++
++  public function onSubdivisions(SubdivisionsEvent $event) {
++
++    $parents = $event->getParents();
++    
++    if (!empty($parents[2]) && $parents[0] == 'PH') {
++      switch ($parents[2]) {
++        case 'Bacolod City':
++          $definitions = ['country_code' => $parents[0], 'parents' => $parents, 'subdivisions' => $this->getValidBarangaysBacolod(),];
++          break;
++      }    
++      $event->setDefinitions($definitions);
++    }
++    elseif (!empty($parents[1]) && $parents[0] == 'PH') {
++      switch ($parents[1]) {
++        case 'Negros Occidental':
++          $definitions = ['country_code' => $parents[0], 'parents' => $parents, 'subdivisions' => $this->getValidCitiesNegros(),];
++          break;
++      }    
++      $event->setDefinitions($definitions);
++    }
++    elseif (!empty($parents[0]) && $parents[0] == 'PH') {
++      $definitions = [
++        'country_code' => $parents[0],
++        'parents' => $parents,
++        'subdivisions' => $this->getValidProvincesPhilippines(),
++      ];
++      $event->setDefinitions($definitions);
++    }
++    else
++      return;
++  }
++  
++  public function getValidProvincesPhilippines(){
++    return [
++      "Negros Occidental" => [
++         "name" => "Negros Occidental",
++         "iso_code" => "PH-NEC",
++	 "postal_code_pattern" => "61[0-3]",
++         "has_children" => true,
++      ],
++    ];
++  }  
++  
++  public function getValidCitiesNegros(){
++    return [
++      'Bacolod City' => [
++        "has_children" => true,
++        "postal_code_pattern" => "6100",
++      ],
++    ];
++  }
++
++  public function getValidBarangaysBacolod(){
++    return [
++      "Barangay 1" => [],
++      "Barangay 2" => [],
++      ],
++    ];
++  } 
++?>
+diff --git a/src/EventSubscriber/TestEventSubscriber.php b/src/EventSubscriber/TestEventSubscriber.php
+new file mode 100644
+index 0000000..4c3b8a7
+--- /dev/null
++++ b/src/EventSubscriber/TestEventSubscriber.php
+@@ -0,0 +1,101 @@
++<?php
++
++namespace Drupal\address\EventSubscriber;
++
++use CommerceGuys\Addressing\AddressFormat\AdministrativeAreaType;
++use Drupal\address\Event\AddressEvents;
++use Drupal\address\Event\AddressFormatEvent;
++use Drupal\address\Event\SubdivisionsEvent;
++use Symfony\Component\EventDispatcher\EventSubscriberInterface;
++
++/**
++ * Adds a county field and a predefined list of counties for Great Britain.
++ *
++ * Counties are not provided by the library because they're not used for
++ * addressing. However, sites might want to add them for other purposes.
++ */
++class TestEventSubscriber implements EventSubscriberInterface {
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getSubscribedEvents() {
++    $events[AddressEvents::ADDRESS_FORMAT][] = ['onAddressFormat'];
++    $events[AddressEvents::SUBDIVISIONS][] = ['onSubdivisions'];
++    return $events;
++  }
++
++  /**
++   * Alters the address format for Great Britain.
++   *
++   * @param \Drupal\address\Event\AddressFormatEvent $event
++   *   The address format event.
++   */
++  public function onAddressFormat(AddressFormatEvent $event) {
++	$definition = $event->getDefinition();
++	if ($definition['country_code'] == 'GB') {
++     		$definition['format'] = $definition['format'] . "\n%administrativeArea";
++    		$definition['administrative_area_type'] = AdministrativeAreaType::COUNTY;
++      		$definition['subdivision_depth'] = 1;
++      		$event->setDefinition($definition);
++    	}
++  }
++
++  /**
++   * Provides the subdivisions for Great Britain.
++   *
++   * Note: Provides just the Welsh counties. A real subscriber would include
++   * the full list, sourced from the CLDR "Territory Subdivisions" listing.
++   *
++   * @param \Drupal\address\Event\SubdivisionsEvent $event
++   *   The subdivisions event.
++   */
++  public function onSubdivisions(SubdivisionsEvent $event) {
++    // For administrative areas $parents is an array with just the country code.
++    // Otherwise it also contains the parent subdivision codes. For example,
++    // if we were defining cities in California, $parents would be ['US', 'CA'].
++    $parents = $event->getParents();
++    if ($event->getParents() != ['GB']) {
++      return;
++    }
++
++    $definitions = [
++      'country_code' => $parents[0],
++      'parents' => $parents,
++      'subdivisions' => [
++        // Key by the subdivision code, which is the value that's displayed on
++        // the formatted address. Could be an abbreviation (e.g 'CA' for
++        // California) or a full name like below.
++        // If it's an abbreviation, define a 'name' in the subarray, to be used
++	// in the address widget dropdown.
++	'Anglesey' => [],
++        // You can optionally define an ISO 3166-2 code for each subdivision.
++        'Blaenau Gwent' => [
++          'iso_code' => 'GB-BGW',
++        ],
++        'Bridgend' => [],
++        'Caerphilly' => [],
++        'Cardiff' => [],
++        'Carmarthenshire' => [],
++        'Ceredigion' => [],
++        'Conwy' => [],
++        'Denbighshire' => [],
++        'Flintshire' => [],
++        'Gwynedd' => [],
++        'Merthyr Tydfil' => [],
++        'Monmouthshire' => [],
++        'Neath Port Talbot' => [],
++        'Newport' => [],
++        'Pembrokeshire' => [],
++        'Powys' => [],
++        'Rhondda Cynon Taf' => [],
++        'Swansea' => [],
++        'Tarfaen' => [],
++        'Vale of Glamorgan' => [],
++        'Wrexham' => [],
++      ],
++    ];
++    $event->setDefinitions($definitions);
++  }
++
++}
